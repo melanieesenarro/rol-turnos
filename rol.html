@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rol de Turnos - Enero 2026</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#111a2e; --text:#e7eefc; --muted:#a9b8d6;
+      --blue:#1e3a8a;         /* Biopsia */
+      --red:#b91c1c;          /* URI */
+      --cyan:#06b6d4;         /* Tomografía */
+      --green:#16a34a;        /* RM */
+      --brick:#9a3412;        /* Tópico */
+      --brown:#7c2d12;        /* Eco */
+      --pink:#db2777;         /* Mamá */
+      --yellow:#facc15;       /* Sedación */
+      --purple:#7c3aed;       /* 14 excedente */
+      --line:#24314e;
+    }
+    body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text);}
+    header{position:sticky; top:0; background:rgba(11,18,32,.95); backdrop-filter: blur(10px); border-bottom:1px solid var(--line); padding:14px 14px 10px;}
+    h1{font-size:16px; margin:0 0 8px;}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+    select, input{background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:10px; padding:10px; font-size:14px;}
+    main{padding:14px; max-width:720px; margin:0 auto;}
+    .section-title{font-size:13px; color:var(--muted); margin:16px 2px 10px;}
+    .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px; margin-bottom:10px;}
+    .tag{display:inline-flex; align-items:center; gap:8px; font-weight:700; padding:6px 10px; border-radius:999px; font-size:12px;}
+    .tag .dot{width:10px; height:10px; border-radius:50%;}
+    .who{margin-top:10px; display:flex; flex-direction:column; gap:8px;}
+    .person{display:flex; justify-content:space-between; gap:12px; padding:10px; border-radius:12px; border:1px dashed var(--line);}
+    .name{font-weight:700;}
+    .meta{color:var(--muted); font-size:13px;}
+    .code{font-weight:800;}
+    details{margin-top:14px;}
+    summary{cursor:pointer; color:var(--muted);}
+    .legend{margin-top:10px; color:var(--muted); font-size:13px; line-height:1.4;}
+    .pill{display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid var(--line); margin:4px 6px 0 0;}
+    .empty{color:var(--muted); padding:18px; border:1px dashed var(--line); border-radius:16px; text-align:center;}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Rol de Turnos – Enero 2026</h1>
+  <div class="row">
+    <label for="day" class="meta">Día:</label>
+    <select id="day"></select>
+    <span id="pretty" class="meta"></span>
+  </div>
+</header>
+
+<main>
+  <div id="content"></div>
+
+  <details>
+    <summary>Ver códigos y colores</summary>
+    <div class="legend" id="legend"></div>
+  </details>
+</main>
+
+<script>
+/** 1) CONFIG: Códigos de turno */
+const SHIFT_CODES = {
+  "34": "8:00 am – 8:00 pm",
+  "26": "7:00 am – 7:00 pm",
+  "29": "7:00 pm – 7:00 am",
+  "14": "8:00 am – 2:00 pm",
+  "167":"6:00 am – 6:00 pm",
+  "LC": "Libre por cumpleaños",
+  "72": "Libre por radiación"
+  // Si vas a separar 72 en dos, puedes poner: "72R": "...", "72M": "..."
+};
+
+/** 2) CONFIG: Áreas con color */
+const AREAS = {
+  "Sedación": {colorVar:"--yellow"},
+  "Biopsia": {colorVar:"--blue"},
+  "URI": {colorVar:"--red"},
+  "Tomografía (TEM)": {colorVar:"--cyan"},
+  "Resonancia Magnética": {colorVar:"--green"},
+  "Tópico": {colorVar:"--brick"},
+  "Eco Convencional": {colorVar:"--brown"},
+  "Biopsia Mamá": {colorVar:"--pink"},
+  "Personal excedente (14)": {colorVar:"--purple"}
+};
+
+/** 3) DATA: Aquí actualizas cada día (solo esto) */
+const DATA = {
+  "2026-01-06": {
+    servicio: "Radiodiagnóstico",
+    bloques: [
+      { tipo:"Licenciados", items:[
+        { area:"Sedación", personas:[{nombre:"FLORES DEL VALLE GUADALUPE", codigo:"26"}]},
+        { area:"Biopsia", personas:[{nombre:"QUISPE PINCOS MARILU", codigo:"34"}]},
+        { area:"URI", personas:[{nombre:"LOPEZ REYNOSO LUIGI", codigo:"26"}]},
+        { area:"Resonancia Magnética", personas:[{nombre:"APONTE LLACCHO ROSA", codigo:"26"}]},
+        { area:"Tomografía (TEM)", personas:[
+          {nombre:"ARIAS OSORIO JOVITA", codigo:"26"},
+          {nombre:"ESTRADA SALAS ELIZABETH", codigo:"26"}
+        ]},
+        // Si tienes Biopsia Mamá en ese día, la agregas así:
+        // { area:"Biopsia Mamá", personas:[{nombre:"ARIAS OSORIO JOVITA", codigo:"26"}]},
+      ]},
+      { tipo:"Técnicos", items:[
+        { area:"Tópico", personas:[{nombre:"PICON BRANDAN ESMILIA SUNAMITA", codigo:"167"}]},
+        { area:"Tomografía (TEM)", personas:[
+          {nombre:"MAYON AYALA LEYLA", codigo:"26"},
+          {nombre:"PEREZ DIAZ ABAD", codigo:"34"}
+        ]},
+        { area:"Eco Convencional", personas:[
+          {nombre:"HUAYTA BIZARRO MARISOL LUISA", codigo:"26"},
+          {nombre:"MIRAVAL PISCONTE LIZ NERIDA", codigo:"26"}
+        ]},
+      ]},
+      { tipo:"Guardia nocturna", items:[
+        { area:"Guardia nocturna", personas:[
+          {nombre:"GUTIERREZ LARA CARMEN (Lic.)", codigo:"29"},
+          {nombre:"RIVAS ALARCON DAVID (Téc.)", codigo:"29"}
+        ]}
+      ]},
+      { tipo:"Cardiología", items:[
+        { area:"Cardiología", personas:[
+          {nombre:"DE LA CRUZ VILCA DANIXA (Lic.)", codigo:"26"},
+          {nombre:"VEJARANO CAMPOS GIOVANNA (Lic.)", codigo:"26"},
+          {nombre:"PAZOS SUAREZ MARLENE (Lic.)", codigo:"26"},
+          {nombre:"ALZAMORA SARITUPA AMABELA (Téc.)", codigo:"26"},
+          {nombre:"CRUZ NAVARRO MARIA (Téc.)", codigo:"26"},
+          {nombre:"REQUEJO ANCAJIMA GLADYS (Téc.)", codigo:"26"}
+        ]}
+      ]}
+    ]
+  }
+};
+
+/** ---------- UI RENDER ---------- */
+const daySelect = document.getElementById("day");
+const content = document.getElementById("content");
+const pretty = document.getElementById("pretty");
+
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function fmtDate(iso){
+  const d = new Date(iso+"T00:00:00");
+  return d.toLocaleDateString("es-PE", {weekday:"long", year:"numeric", month:"long", day:"2-digit"});
+}
+
+function buildDayOptions(){
+  const keys = Object.keys(DATA).sort();
+  keys.forEach(k=>{
+    const opt = document.createElement("option");
+    opt.value = k;
+    opt.textContent = k;
+    daySelect.appendChild(opt);
+  });
+  // Selección por defecto: el primero
+  if(keys.length) daySelect.value = keys[0];
+}
+
+function areaTag(area){
+  const cfg = AREAS[area] || {colorVar:"--line"};
+  const color = cssVar(cfg.colorVar);
+  const tag = document.createElement("div");
+  tag.className = "tag";
+  tag.style.background = "rgba(255,255,255,.04)";
+  tag.style.border = "1px solid var(--line)";
+  const dot = document.createElement("span");
+  dot.className = "dot";
+  dot.style.background = color;
+  const txt = document.createElement("span");
+  txt.textContent = area;
+  tag.appendChild(dot); tag.appendChild(txt);
+  return tag;
+}
+
+function render(){
+  const key = daySelect.value;
+  const day = DATA[key];
+  content.innerHTML = "";
+  if(!day){
+    content.innerHTML = `<div class="empty">No hay datos para este día.</div>`;
+    pretty.textContent = "";
+    return;
+  }
+  pretty.textContent = "• " + fmtDate(key) + " • " + (day.servicio || "");
+
+  day.bloques.forEach(b=>{
+    const h = document.createElement("div");
+    h.className = "section-title";
+    h.textContent = b.tipo;
+    content.appendChild(h);
+
+    b.items.forEach(item=>{
+      const card = document.createElement("div");
+      card.className = "card";
+      card.appendChild(areaTag(item.area));
+
+      const who = document.createElement("div");
+      who.className = "who";
+
+      (item.personas || []).forEach(p=>{
+        const row = document.createElement("div");
+        row.className = "person";
+
+        const left = document.createElement("div");
+        const name = document.createElement("div");
+        name.className = "name";
+        name.textContent = p.nombre;
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        const hours = SHIFT_CODES[p.codigo] || "Horario no definido";
+        meta.textContent = hours;
+
+        left.appendChild(name);
+        left.appendChild(meta);
+
+        const right = document.createElement("div");
+        right.className = "code";
+        right.textContent = `(${p.codigo})`;
+
+        row.appendChild(left);
+        row.appendChild(right);
+        who.appendChild(row);
+      });
+
+      card.appendChild(who);
+      content.appendChild(card);
+    });
+  });
+
+  renderLegend();
+}
+
+function renderLegend(){
+  const legend = document.getElementById("legend");
+  const codes = Object.entries(SHIFT_CODES)
+    .map(([k,v])=>`<span class="pill"><b>${k}</b> → ${v}</span>`)
+    .join("");
+
+  const colors = Object.entries(AREAS)
+    .map(([k,v])=>{
+      const c = cssVar(v.colorVar);
+      return `<span class="pill"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};margin-right:6px;"></span>${k}</span>`;
+    }).join("");
+
+  legend.innerHTML = `<div><b>Códigos:</b><br>${codes}</div><br><div><b>Colores:</b><br>${colors}</div>`;
+}
+
+daySelect.addEventListener("change", render);
+
+buildDayOptions();
+render();
+</script>
+</body>
+</html>
